@@ -30,18 +30,15 @@ app.post('/users', async (req, res) => {
         const id = body.id;
         const userExist = await User.findByUserId(id);
         
-        // console.log(userExist)
         if(userExist) {
             const token = userExist.tokens[0].token;
-            // console.log('userExist', userExist);
+            
             const expDate = new Date(userExist.tokens[0].expires);
             var currentDate = new Date();
             
 
             const daysLeft = (expDate.getTime()-currentDate.getTime())/(1000 * 3600 * 24)
             if(daysLeft > 0){
-                
-                console.log(token)
                 res.header('x-auth', token).send(userExist);
             }
             
@@ -66,7 +63,6 @@ app.post('/users', async (req, res) => {
     
             var expiryDate = new Date();
             expiryDate.setSeconds(expiryDate.getSeconds() + expires);
-            console.log(expiryDate)
             const token = await user.generateAccessToken(expiryDate);
             res.header('x-auth', token).send(user);
         }
