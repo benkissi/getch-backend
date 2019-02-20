@@ -5,9 +5,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const FB = require('fb').default;
 
-const { authenticate } = require('./middleware/authenticate');
 var {mongoose} = require('./db/mongoose');
 var {User} = require('./models/user');
+const { authenticate } = require('./middleware/authenticate');
+
 
 var app = express();
 app.use(bodyParser.json());
@@ -26,26 +27,51 @@ app.use((req, res, next) => {
 app.post('/users', async (req, res) => {
     try{
         const body = _.pick(req.body, ['email', 'name', 'authToken', 'id']);
+        const id = body.id;
+        const userExist = await User.findByUserId(id);
         
-        const results = await FB.api('oauth/access_token', {
-            client_id: process.env.APP_ID,
-            client_secret: process.env.APP_SECRET,
-            grant_type: 'fb_exchange_token',
-            fb_exchange_token: body.authToken
-        });
+        // console.log(userExist)
+        if(userExist) {
+            const token = userExist.tokens[0].token;
+            // console.log('userExist', userExist);
+            const expDate = new Date(userExist.tokens[0].expires);
+            var currentDate = new Date();
+            
 
-        const accessToken = results.access_token;
-        const expires = results.expires_in ? results.expires_in : 0;
-        const userDetails = {
-            email: body.email,
-            name: body.name,
-            authToken: accessToken,
-            userId: body.id
+            const daysLeft = (expDate.getTime()-currentDate.getTime())/(1000 * 3600 * 24)
+            if(daysLeft > 0){
+                
+                console.log(token)
+                res.header('x-auth', token).send(userExist);
+            }
+            
+        }else{
+            const results = await FB.api('oauth/access_token', {
+                client_id: process.env.APP_ID,
+                client_secret: process.env.APP_SECRET,
+                grant_type: 'fb_exchange_token',
+                fb_exchange_token: body.authToken
+            });
+    
+            const accessToken = results.access_token;
+            const expires = results.expires_in ? results.expires_in : 0;
+            const userDetails = {
+                email: body.email,
+                name: body.name,
+                authToken: accessToken,
+                userId: body.id
+            }
+            var user = new User(userDetails);
+            await user.save();
+    
+            var expiryDate = new Date();
+            expiryDate.setSeconds(expiryDate.getSeconds() + expires);
+            console.log(expiryDate)
+            const token = await user.generateAccessToken(expiryDate);
+            res.header('x-auth', token).send(user);
         }
-        var user = new User(userDetails);
-        await user.save();
-        const token = await user.generateAccessToken(expires);
-        res.header('x-auth', token).send(user);
+        
+        
     }catch(e) {
         res.status(400).send(e);
         console.log(e)

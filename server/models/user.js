@@ -92,8 +92,14 @@ UserSchema.statics.findByToken = function(token) {
         authToken: decoded.authToken,
         'tokens.token': token,
         'tokens.access': 'auth'
-    })
+    });
 
+}
+
+UserSchema.statics.findByUserId = function(id) {
+    var User = this;
+
+    return User.findOne({userId:id});
 }
 
 UserSchema.statics.findByCredentials = function (email) {
