@@ -29,7 +29,7 @@ app.post('/users', async (req, res) => {
         const body = _.pick(req.body, ['email', 'name', 'authToken', 'id']);
         const id = body.id;
         const userExist = await User.findByUserId(id);
-        
+        console.log(body)
         if(userExist) {
             const token = userExist.tokens[0].token;
             console.log(userExist);
