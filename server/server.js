@@ -32,7 +32,7 @@ app.post('/users', async (req, res) => {
         
         if(userExist) {
             const token = userExist.tokens[0].token;
-            
+            console.log(userExist);
             const expDate = new Date(userExist.tokens[0].expires);
             var currentDate = new Date();
             
