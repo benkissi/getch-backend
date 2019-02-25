@@ -27,46 +27,36 @@ app.use((req, res, next) => {
 app.post('/users', async (req, res) => {
     try{
         const body = _.pick(req.body, ['email', 'name', 'authToken', 'id']);
-        const id = body.id;
-        const userExist = await User.findByUserId(id);
-        console.log(body)
-        if(userExist) {
-            const token = userExist.tokens[0].token;
-            console.log(userExist);
-            const expDate = new Date(userExist.tokens[0].expires);
-            var currentDate = new Date();
-            
+        
+        const results = await FB.api('oauth/access_token', {
+            client_id: process.env.APP_ID,
+            client_secret: process.env.APP_SECRET,
+            grant_type: 'fb_exchange_token',
+            fb_exchange_token: body.authToken
+        });
+    
+        const accessToken = results.access_token;
+        const expires = results.expires_in ? results.expires_in : 0;
+        const userDetails = {
+            email: body.email,
+            name: body.name,
+            authToken: accessToken,
+            userId: body.id
+        }
 
-            const daysLeft = (expDate.getTime()-currentDate.getTime())/(1000 * 3600 * 24)
-            if(daysLeft > 0){
-                res.header('x-auth', token).send(userExist);
-            }
-            
-        }else{
-            const results = await FB.api('oauth/access_token', {
-                client_id: process.env.APP_ID,
-                client_secret: process.env.APP_SECRET,
-                grant_type: 'fb_exchange_token',
-                fb_exchange_token: body.authToken
-            });
-    
-            const accessToken = results.access_token;
-            const expires = results.expires_in ? results.expires_in : 0;
-            const userDetails = {
-                email: body.email,
-                name: body.name,
-                authToken: accessToken,
-                userId: body.id
-            }
-            var user = new User(userDetails);
-            await user.save();
-    
+        const query = {userId: body.id};
+        await User.findOneAndUpdate(query, userDetails, {upsert: true}, async function(err, doc){
+            if (err) {
+                console.log(err);
+                return
+            };
+            const user = await User.findByCredentials(body.email);
+
             var expiryDate = new Date();
             expiryDate.setSeconds(expiryDate.getSeconds() + expires);
             const token = await user.generateAccessToken(expiryDate);
             res.header('x-auth', token).send(user);
-        }
-        
+        });
         
     }catch(e) {
         res.status(400).send(e);

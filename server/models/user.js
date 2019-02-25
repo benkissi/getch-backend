@@ -109,6 +109,8 @@ UserSchema.statics.findByCredentials = function (email) {
         if (!user) {
             return Promise.reject()
         }
+
+        return Promise.resolve(user)
     })
 }
 
