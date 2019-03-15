@@ -105,6 +105,11 @@ app.get('/stats/:id', authenticate, async (req,res) => {
     res.send(stats);
 });
 
+app.get('/up', (req,res) => {
+    
+    res.send('App is up');
+});
+
 app.listen(port, ()=> {
     console.log(`Server started on port ${port}`);
 });
