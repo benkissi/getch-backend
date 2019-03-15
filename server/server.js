@@ -13,13 +13,13 @@ var {mongoose} = require('./db/mongoose');
 
 var app = express();
 
-const corsOptions = {
-    origin: '*',
-    exposedHeaders: ['content-type','x-auth'],
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-auth']
-};
+// const corsOptions = {
+//     origin: '*',
+//     exposedHeaders: ['content-type','x-auth'],
+//     allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-auth']
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 
@@ -27,7 +27,12 @@ FB.options({version: 'v3.2'});
 
 const port = process.env.PORT || 3000;
 
-
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');	
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-auth');	
+    res.header('Access-Control-Expose-Headers', 'x-auth');	
+    next();	
+});
 
 app.post('/users', async (req, res, next) => {
     try{
