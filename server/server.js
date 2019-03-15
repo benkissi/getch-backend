@@ -1,13 +1,14 @@
-require('./config/config');
 
 const _ = require('lodash');
+const cors = require('cors');
+const FB = require('fb').default;
 const express = require('express');
 const bodyParser = require('body-parser');
-const FB = require('fb').default;
 
-var {mongoose} = require('./db/mongoose');
 var {User} = require('./models/user');
 const { authenticate } = require('./middleware/authenticate');
+require('./config/config');
+var {mongoose} = require('./db/mongoose');
 
 
 var app = express();
@@ -17,12 +18,7 @@ FB.options({version: 'v3.2'});
 
 const port = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-auth');
-    res.header('Access-Control-Expose-Headers', 'x-auth');
-    next();
-});
+app.use(cors())
 
 app.post('/users', async (req, res) => {
     try{
