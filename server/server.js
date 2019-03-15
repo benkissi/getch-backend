@@ -14,7 +14,9 @@ var {mongoose} = require('./db/mongoose');
 var app = express();
 
 const corsOptions = {
-    exposedHeaders: ['content-type','x-auth']
+    origin: '*',
+    exposedHeaders: ['content-type','x-auth'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-auth']
 };
 
 app.use(cors(corsOptions));
