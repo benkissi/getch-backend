@@ -12,17 +12,20 @@ var {mongoose} = require('./db/mongoose');
 
 
 var app = express();
+
+const corsOptions = {
+    exposedHeaders: ['content-type','x-auth']
+};
+
+app.use(cors(corsOptions));
+
 app.use(bodyParser.json());
 
 FB.options({version: 'v3.2'});
 
 const port = process.env.PORT || 3000;
 
-const corsOptions = {
-    exposedHeaders: ['content-type','x-auth']
-}
 
-app.use(cors(corsOptions))
 
 app.post('/users', async (req, res, next) => {
     try{
