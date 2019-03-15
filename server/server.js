@@ -37,7 +37,6 @@ app.use((req, res, next) => {
 app.post('/users', async (req, res, next) => {
     try{
         const body = _.pick(req.body, ['email', 'name', 'authToken', 'id']);
-        
         const results = await FB.api('oauth/access_token', {
             client_id: process.env.APP_ID,
             client_secret: process.env.APP_SECRET,
@@ -137,7 +136,7 @@ app.get('/stats/:id', authenticate, async (req,res, next) => {
     
 });
 
-app.get('/up', (req,res,next) => {
+app.get('/up', (req,res) => {
     res.send('App is up');
 });
 
