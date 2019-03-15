@@ -18,7 +18,11 @@ FB.options({version: 'v3.2'});
 
 const port = process.env.PORT || 3000;
 
-app.use(cors())
+const corsOptions = {
+    exposedHeaders: ['content-type','x-auth']
+}
+
+app.use(cors(corsOptions))
 
 app.post('/users', async (req, res, next) => {
     try{
@@ -51,6 +55,7 @@ app.post('/users', async (req, res, next) => {
             var expiryDate = new Date();
             expiryDate.setSeconds(expiryDate.getSeconds() + expires);
             const token = await user.generateAccessToken(expiryDate);
+            console.log(token)
             res.header('x-auth', token).send(user);
         });
         
