@@ -1,6 +1,5 @@
-
+const axios = require('axios')
 const _ = require('lodash');
-const cors = require('cors');
 const FB = require('fb').default;
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -64,7 +63,6 @@ app.post('/users', async (req, res, next) => {
             var expiryDate = new Date();
             expiryDate.setSeconds(expiryDate.getSeconds() + expires);
             const token = await user.generateAccessToken(expiryDate);
-            console.log(token)
             res.header('x-auth', token).send(user);
         });
         
@@ -135,6 +133,79 @@ app.get('/stats/:id', authenticate, async (req,res, next) => {
     
     
 });
+
+app.post('/verify-payment', authenticate, async (req, res, next) => {
+    try {
+        const body = _.pick(req.body, ['plan', 'ref', 'id']);
+        const url = 'https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/v2/verify';
+        const response = await axios.post(url, {
+            "SECKEY": process.env.RAVE_KEY,
+            "txref": body.ref
+        });
+        if (response.data.data.status === "successful" && response.data.data.chargecode == 00) {
+            const data = response.data.data;
+            if (response.data.data.amount == 20 && body.plan === "monthly") {
+                console.log("Payment successful for monthly plan");
+
+                const userDetails = {
+                    plan: {
+                        name: 'monthly',
+                        customerId: data.customerid,
+                        planId: data.paymentplan
+                    }
+                }
+                const query = {userId: body.id}
+                await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
+                    if (err) {
+                        console.log(err)
+                        res.send(err)
+                        return
+                    }else {
+                        const user = await User.findByUserId(body.id);
+                        console.log(user)
+                        res.send(user);
+                    }
+                })
+                
+            }else if (response.data.data.amount == 140 && body.plan === "yearly") {
+                console.log("Payment successful for yearly plan");
+                const userDetails = {
+                    plan: {
+                        name: 'yearly',
+                        customerId: data.customerid,
+                        planId: data.paymentplan
+                    }
+                }
+                const query = {userId: body.id}
+                await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
+                    if (err) {
+                        console.log(err)
+                        res.send(err)
+                        return
+                    }else {
+                        const user = await User.findByUserId(body.id);
+                        console.log(user)
+                        res.send(user);
+                    }
+                });
+            }else {
+                res.status(400).send('Unable to make payment')
+            }
+        }
+    } catch(e) {
+        console.log(e);
+        res.status(400).send(e)
+    }
+});
+
+app.get('/get-user', authenticate, (req, res, next) => {
+    try {
+        const user = req.user;
+        res.send(user)
+    } catch(e) {
+        res.status(400).send(e)
+    }
+})
 
 app.get('/up', (req,res) => {
     res.send('App is up');

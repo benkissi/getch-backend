@@ -28,6 +28,27 @@ var UserSchema =  new mongoose.Schema({
         type: String,
         required: true
     },
+    plan : {
+        name : {
+            type: String,
+            trim: true,
+            default: "trial"
+        },
+        nextPayment : {
+            type: Date
+        },
+        planId: {
+            type: Number
+        },
+        customerId: {
+            type: Number
+        }
+    },
+    dateCreated : {
+        type: String,
+        required: true,
+        default: new Date().getTime()
+    },
     tokens: [{
         access: {
             type: String,
@@ -48,7 +69,7 @@ UserSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
 
-    return _.pick(userObject, ['_id', 'email','name']);
+    return _.pick(userObject, ['_id', 'email','name','plan', 'dateCreated' ]);
 
 }
 
