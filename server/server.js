@@ -128,7 +128,7 @@ app.get('/stats/:id', authenticate, async (req,res, next) => {
 app.post('/verify-payment', authenticate, async (req, res, next) => {
     try {
         const body = _.pick(req.body, ['plan', 'ref', 'id']);
-        const url = 'https://ravesandboxapi.flutterwave.com/flwv3-pug/getpaidx/api/v2/verify';
+        const url = 'https://api.ravepay.co/flwv3-pug/getpaidx/api/v2/verify';
         const response = await axios.post(url, {
             "SECKEY": process.env.RAVE_KEY,
             "txref": body.ref
