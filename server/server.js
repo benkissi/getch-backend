@@ -1,24 +1,15 @@
-const axios = require('axios')
+const axios = require('axios');
 const _ = require('lodash');
 const FB = require('fb').default;
 const express = require('express');
 const bodyParser = require('body-parser');
 
-var {User} = require('./models/user');
+const {User} = require('./models/user');
 const { authenticate } = require('./middleware/authenticate');
 require('./config/config');
 var {mongoose} = require('./db/mongoose');
 
-
 var app = express();
-
-// const corsOptions = {
-//     origin: '*',
-//     exposedHeaders: ['content-type','x-auth'],
-//     allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-auth']
-// };
-
-// app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 
@@ -144,17 +135,20 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
         });
         if (response.data.data.status === "successful" && response.data.data.chargecode == 00) {
             const data = response.data.data;
-            if (response.data.data.amount == 20 && body.plan === "monthly") {
+            if (data.amount == 20 && body.plan === "monthly") {
                 console.log("Payment successful for monthly plan");
 
+                // const date = new Date();
+                // const nextPayment = date.setTime( date.getTime() + 30 * 86400000 );
+
                 const userDetails = {
-                    plan: {
-                        name: 'monthly',
-                        customerId: data.customerid,
-                        planId: data.paymentplan
-                    }
+                        'plan.name': 'monthly',
+                        'plan.customerId': data.customerid,
+                        'plan.planId': data.paymentplan
                 }
+
                 const query = {userId: body.id}
+                
                 await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
                     if (err) {
                         console.log(err)
@@ -162,13 +156,16 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
                         return
                     }else {
                         const user = await User.findByUserId(body.id);
-                        console.log(user)
                         res.send(user);
+                        console.log(user)
                     }
                 })
                 
-            }else if (response.data.data.amount == 140 && body.plan === "yearly") {
+            }else if (data.amount == 140 && body.plan === "yearly") {
                 console.log("Payment successful for yearly plan");
+                const date = new Date();
+                const nextPayment = date.setTime( date.getTime() + 30 * 86400000 );
+
                 const userDetails = {
                     plan: {
                         name: 'yearly',
@@ -184,13 +181,13 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
                         return
                     }else {
                         const user = await User.findByUserId(body.id);
-                        console.log(user)
                         res.send(user);
                     }
                 });
             }else {
-                res.status(400).send('Unable to make payment')
+                res.status(400).send('Unable to make payment');
             }
+            
         }
     } catch(e) {
         console.log(e);
@@ -205,7 +202,44 @@ app.get('/get-user', authenticate, (req, res, next) => {
     } catch(e) {
         res.status(400).send(e)
     }
-})
+});
+
+app.post('/payment-webhook', async (req, res, next) => {
+    try {
+        var hash = req.headers["verif-hash"];
+
+        if(!hash) {
+            return
+        }
+
+        const secret_hash = process.env.RAVE_HASH;
+        if(hash != secret_hash) {
+            return
+        }
+        const date = new Date();
+        const nextPayment = date.setTime( date.getTime() + 30 * 86400000 );
+
+        const userDetails = {
+            'plan.nextPayment': nextPayment
+        }
+
+        const userEmail = req.body.customer.email;
+        const query = {email: userEmail};
+
+        await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
+            if (err) {
+                return
+            }else {
+                console.log('doc', doc)
+                const user = await User.findByCredentials(userEmail);
+                console.log('the user',user);
+            }
+        });
+        
+    } catch(e) {
+        console.log(e);
+    }
+});
 
 app.get('/up', (req,res) => {
     res.send('App is up');

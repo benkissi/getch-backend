@@ -45,7 +45,7 @@ var UserSchema =  new mongoose.Schema({
         }
     },
     dateCreated : {
-        type: String,
+        type: Date,
         required: true,
         default: new Date().getTime()
     },
