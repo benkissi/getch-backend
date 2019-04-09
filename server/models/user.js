@@ -28,6 +28,10 @@ var UserSchema =  new mongoose.Schema({
         type: String,
         required: true
     },
+    search : {
+        type: Number,
+        default: 0
+    },
     plan : {
         name : {
             type: String,
@@ -69,7 +73,7 @@ UserSchema.methods.toJSON = function () {
     var user = this;
     var userObject = user.toObject();
 
-    return _.pick(userObject, ['_id', 'email','name','plan', 'dateCreated' ]);
+    return _.pick(userObject, ['_id', 'email','name','plan', 'dateCreated', 'search' ]);
 
 }
 

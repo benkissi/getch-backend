@@ -44,7 +44,7 @@ app.post('/users', async (req, res, next) => {
         }
 
         const query = {userId: body.id};
-        await User.findOneAndUpdate(query, userDetails, {upsert: true}, async function(err, doc){
+        User.findOneAndUpdate(query, userDetails, {upsert: true}, async function(err, doc){
             if (err) {
                 console.log(err);
                 return
@@ -149,7 +149,7 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
 
                 const query = {userId: body.id}
                 
-                await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
+                User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
                     if (err) {
                         console.log(err)
                         res.send(err)
@@ -174,7 +174,7 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
                     }
                 }
                 const query = {userId: body.id}
-                await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
+                User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
                     if (err) {
                         console.log(err)
                         res.send(err)
@@ -226,7 +226,7 @@ app.post('/payment-webhook', async (req, res, next) => {
         const userEmail = req.body.customer.email;
         const query = {email: userEmail};
 
-        await User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
+        User.findOneAndUpdate(query, userDetails, { upsert: true}, async (err, doc) => {
             if (err) {
                 return
             }else {
@@ -241,6 +241,24 @@ app.post('/payment-webhook', async (req, res, next) => {
     }
 });
 
+app.get('/search', authenticate, async (req,res) => {
+    try {
+        const user = req.user;
+        const query = {userId: user.userId};
+        User.findOneAndUpdate(query, { $inc: { search: 1 }}, {upsert: false}, async function(err, doc){
+            if (err) {
+                console.log(err);
+                return
+            };
+            const response = await User.findByCredentials(user.email);
+            // console.log(response)
+            res.send(response);
+        });
+    } catch(e) {
+        res.status(400).send(e)
+    }
+});
+
 app.get('/up', (req,res) => {
     res.send('App is up');
 });
@@ -252,8 +270,6 @@ app.use((err, req, res, next) => {
     }
 
 })
-
-
 
 app.listen(port, ()=> {
     console.log(`Server started on port ${port}`);
