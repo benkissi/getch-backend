@@ -135,7 +135,7 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
         });
         if (response.data.data.status === "successful" && response.data.data.chargecode == 00) {
             const data = response.data.data;
-            if (data.amount == 20 && body.plan === "monthly") {
+            if (data.amount == 9.99 && body.plan === "monthly") {
                 console.log("Payment successful for monthly plan");
 
                 // const date = new Date();
@@ -161,10 +161,8 @@ app.post('/verify-payment', authenticate, async (req, res, next) => {
                     }
                 })
                 
-            }else if (data.amount == 140 && body.plan === "yearly") {
+            }else if (data.amount == 89.99 && body.plan === "yearly") {
                 console.log("Payment successful for yearly plan");
-                const date = new Date();
-                const nextPayment = date.setTime( date.getTime() + 30 * 86400000 );
 
                 const userDetails = {
                     plan: {
